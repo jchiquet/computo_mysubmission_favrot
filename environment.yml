@@ -1,0 +1,18 @@
+name: computorbuild
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - r-base
+  - r-knitr
+  - r-tidyverse
+  - r-ggplot2
+  - r-tidyverse
+  - r-gridExtra
+  - r-rjags
+  - r-paletteer
+  - r-latex2exp
+  - r-dplyr
+  - r-tidyr
+  - r-tibble
+  - r-cowplot
