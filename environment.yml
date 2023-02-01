@@ -13,3 +13,4 @@ dependencies:
   - r-tidyr
   - r-tibble
   - r-cowplot
+  - r-tidyverse
