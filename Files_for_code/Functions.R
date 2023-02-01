@@ -317,6 +317,8 @@ gelman.plot2 <- function (x, coef, bin.width = 10, max.bins = 50, confidence = 0
     scale_linetype_manual(values = c("dotted", "solid")) + 
     scale_color_manual(values = c("red", "black")))
 }
+###########################################################################################################################################################################
+
 
 
 ###########################################################################################################################################################################
@@ -353,38 +355,3 @@ f_plot_chains <- function(samp, nrow = 3){
     ggplot(df_plot) + geom_line(aes(x = i, y = value, color = chaine)) + facet_wrap(~ name, scales = "free_y", nrow = nrow, labeller = label_parsed) + theme(legend.position = "none") + xlab("Iteration") + ylab("Sampled value")
 }
 ###########################################################################################################################################################################
-
-
-
-
-
-############################################################################################################################################################################ # Function that takes as input a list of p variables with for each one the values it takes and returns an array with p columns and a number of rows such that we have all possible combinations of the values taken by the variables.
-f_var <- function(var){
-
-  # variable creation, step 1  
-  n_var = sapply(var, function(x) length(x))
-  
-  n = length(n_var)
-  
-  n_var = c(n_var, 1)
-  
-  df = as.data.frame(matrix(rep(NA, prod(n_var)*n), ncol = n));   colnames(df) = names(var)
-  
-  l = list()
-  
-  for (j in 1:n){
-    a = prod(n_var[(j+1):(n+1)])
-    l[[j]] = as.vector(sapply(c(1:n_var[j]), function(x) rep(var[[j]][x], a)))
-  }
-  
-  # variable creation, step 2
-  z = c(1, n_var)
-  
-  for (j in 1:n){
-    a = prod(z[1 : j])
-    df[, j] = rep(l[[j]], a)
-  }
-  
-  return(df)
-}
-############################################################################################################################################################################

@@ -350,10 +350,9 @@ simu_data <- function(seed, I){
     set.seed(seed)
     
     ID = c(1 : I);   
-    var = list("ID" = ID, "Block" = Block, "Band" = Band, "Beet" = Beet, 
-               "DPT" = DPT);   
 
-    data = f_var(var)
+    data = expand_grid(ID = c(1 : I),   Block = c(1 : K),   Band = c(1 : J), 
+                   Beet = c(1 : N),   DPT = seq(0, 12, length.out = T))
 
     data = data %>% 
         mutate(Insecticide = ifelse(DPT <= 0, "T 1", paste("T", Band)),
@@ -780,7 +779,7 @@ df_len12 = df_len %>% rename(Insecticide = Insecticide) %>% select(Insecticide, 
 #######################################################################################################################################################
 df_IC = rbind(df_IC_6, df_IC_12) %>% mutate(jour = recode(jour, "6" = "A", "12" = "B")); 
 
-col = c(paletteer_d("awtools::spalette", n = 5))[- c(2)]
+col = c("#9F248FFF", "#017A4AFF", "#F9791EFF", "#244579FF")   # c(paletteer_d("awtools::spalette", n = 5))[- c(2)]
 
 ggplot(df_IC) + geom_point(aes(x = P, y = Ordonnee, color = Data), size = 1) +
     geom_line(aes(x = value, y = Ordonnee, group = Ordonnee, color = Data), size = 0.4) + 
