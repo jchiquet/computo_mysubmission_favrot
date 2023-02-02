@@ -163,6 +163,12 @@ The convergence of the MCMC algorithm was checked by inspecting the mixing of th
 
  
 ```{r inference_example_real_data, cache = FALSE, eval = TRUE, results = 'hide'}
+# The following code presents the inference on an extract fo the real 
+# dataset, which includes both trials of figure 1B (2020 - B1A97 ; 2020 - 
+# u1CwE). It is  a demo for the "50% Y / 50% Z" scenario and we set here the 
+# number of adaptation and iteration to 2000 in order to reduce computation 
+# time.
+
 # Jags code for the model  #################################################
 modelstringYZ = "
     model {
@@ -224,6 +230,16 @@ writeLines(modelstringYZ, con  =  "Files_for_code/modelYZ.txt")
 load(file = "Files_for_code/real_data_extract.Rdata")
 data = real_data_extract %>% 
     mutate(tscaled = scale(DPT), st = paste(ID, Insecticide))
+
+# Building scenarios -------------------------------------------------------
+scenarioY = data %>% mutate(Z = NA)
+scenarioYhalfZhalf = data %>% mutate(Y = ifelse(ID == "2020 - B1A97", Y, NA), 
+                                     Z = ifelse(ID == "2020 - B1A97", NA, Z))
+scenarioYhalf = data %>% filter(ID == "2020 - B1A97") %>% mutate(Z = NA)
+scenarioZhalf = data %>% filter(ID == "2020 - u1CwE") %>% mutate(Y = NA)
+# ---------------------------------------------------------------------------
+
+data = scenarioYhalfZhalf
 
 Y = data$Y;   Q = length(Y);   N = data$N;   Z = data$Z
 
@@ -401,6 +417,10 @@ simu_data <- function(seed, I){
 
 
 # Building scenarios #######################################################
+# Scenarios "50% Y" and "50% Z" are obtained from scenarios "100% Y" and 
+# "100% Z", respectively. For example "50% Y" scenario with 40 trials 
+# corresponds to "100% Y" with 20 trials.
+
 seed = 1;   I = 10
 data = suppressMessages(simu_data(seed = seed, I = I))
 
