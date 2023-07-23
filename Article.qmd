@@ -353,19 +353,19 @@ The code used to perform the simulations is presented below.
 #| file: functions/simu_data.R 
 ```
 
+::: {.callout-note}
+The following code presents the inference for one seed. As the calculus
+time is growing fast with the number of trials and the number of sampled
+values, we set here the number of trials to 10 (I = 10) and the number
+of adaptations and iterations to 2000.
+
+Our simulations results are obtained by running this code for I = 10, 20,
+40, 80, for all seeds between 0 and 999, with a number of adaptations and
+iterations equal to 36000. We used the Migale server from INRAE to run
+these simulations.
+:::
 
 ```{r simulations, cache = TRUE, eval = TRUE, results = 'hide'}
-# The following code presents the inference for one seed. As the calculus 
-# time is growing fast with the number of trials and the number of sampled
-# values, we set here the number of trials to 10 (I = 10) and the number
-# of adaptations and iterations to 2000.
-
-# Ours simulations results are obtained by running this code for I = 10, 20, 
-# 40, 80, for all seeds between 0 and 999, with a number of adaptations and
-# iterations equal to 36000. We used the Migale server from INRAE to run 
-# these simulations.
-
-# Function to simulate data ################################################
 J = 4;   T = 3;   N = 10;   K = 4;
 
 Block = c(1 : K);   Band = c(1 : J);   
