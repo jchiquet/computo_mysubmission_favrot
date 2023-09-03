@@ -4,3 +4,6 @@
 .Ruserdata
 
 /.quarto/
+
+/Article_cache/
+/Article_files/
