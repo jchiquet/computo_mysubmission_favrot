@@ -58,8 +58,7 @@ library(dplyr);
 library(tidyr);
 library(tibble)
 library(kableExtra)
-
-source(file = "Files_for_code/Functions.R")
+library(coda)
 
 x = 6;   y = 8;   z = 7
 theme_replace(axis.text = element_text(size = x),   axis.title.x = element_text(size = y), 
@@ -87,11 +86,75 @@ Pest prevalence and intensity are commonly measured in factorial field trials to
 
 Data were collected in 32 field trials conducted in France, Belgium and Netherlands to compare several treatments against aphids in sugar beets. Each trial consists in a plot located in a given site at a given year (site-year) divided into one to four blocks. Each of these blocks is itself divided into strips where different treatments are tested, one of these treatments being an untreated control and the others corresponding to different types of insecticide. In each strip of each block, the number of aphids was counted on a sample of 10 beet plants (intensity). The number of infested plants (prevalence) was measured as well, but only in 15 trials out of 32. The total numbers of intensity and prevalence data are equal to 1128 and 561, respectively. Note that the number of aphids was not counted on each beet plant but in the whole plant sample. Intensity and prevalence were monitored at different dates during the growing season. As shown in @fig-one A, the dataset is unbalanced as less data are available for the treatment Mavrik-jet compared to the others. Figure 1B shows that the intensity and prevalence tend to increase with time. 
 
-```{r figure1, cache = FALSE, echo = FALSE, out.width="100%", fig.height = 3.8}
+
+
+```{r, fig.width=12, fig.height=14}
+#| echo: false
 #| label: fig-one 
 #| fig-cap: "Description of the dataset. **A** Number of observations according to the type of insecticide. **B** Examples of observed number of aphids averaged over the blocks (intensity) and number of infested beets out of ten (prevalence) averaged over the blocks, at different dates for two trials. Days post treatment is equal to the number of days between the observation date and the treatment. The colors represent the different treatments."
-knitr::include_graphics("figures/fig1.png")
+
+data_figure_1A = readRDS(file = "data/data_figure_1A.rds")
+data_figure_1B = readRDS(file = "data/data_figure_1B.rds")
+
+rectangle_fig1A <- grobTree(rectGrob(gp = gpar(fill = "#e9e9e9")), textGrob("A", x = 0.5, hjust = 0.5, gp = gpar(cex = 2.5, fontface = "bold")))
+
+fig1A = ggplot(data_figure_1A) + 
+    geom_bar(aes(x = Insecticide, y = n, fill = Insecticide), stat = "Identity") + 
+    xlab("Insecticide") + 
+    ylab("Number of observations") +
+    scale_fill_manual(values = c('#df626c', '#893f3d', '#ff842e', '#188038')) + 
+    scale_x_discrete(limits = c("Untreated", "Mavrik Jet", "Movento", "Teppeki")) + 
+    theme(legend.position = "none", 
+          axis.title.x = element_text(margin = margin(b = 50, t = 20), size = 18),
+          axis.title.y = element_text(size = 18, margin = margin(r = 20)),
+          axis.text = element_text(size = 16))
+
+
+rectangle_fig1B <- grobTree(rectGrob(gp = gpar(fill = "#e9e9e9")), textGrob("B", x = 0.5, hjust = 0.5, gp = gpar(cex = 2.5, fontface = "bold")))
+
+fig1B_aphid_intensity = ggplot(data_figure_1B) + 
+    geom_point(aes(x = DPT, y = Ymean, col = Insecticide), size = 2.5) + 
+    geom_line(aes(x = DPT, y = Ymean, col = Insecticide), size = 0.2) +
+    scale_color_manual(values = c('#893f3d', '#ff842e', '#188038')) + 
+    facet_wrap(~ ID, scales = "free", ncol = 2) + 
+    theme(legend.position = "bottom") + 
+    xlab("") + 
+    ylab("Number of aphids") +
+    theme(plot.margin = margin(t = 40, r = 40, b = 0, l = 10), 
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18, margin = margin(r = 20)),
+          axis.text = element_text(size = 16),
+          strip.text = element_text(size = 20),
+          legend.title = element_text(size = 18),
+          legend.text = element_text(size = 18))
+
+fig1B_aphid_prevalence = ggplot(data_figure_1B) + geom_point(aes(x = DPT, y = Zmean, col = Insecticide), size = 2.5) + 
+    geom_line(aes(x = DPT, y = Zmean, col = Insecticide), size = 0.2) +
+    scale_color_manual(values = c('#893f3d', '#ff842e', '#188038')) + 
+    facet_wrap(~ ID, ncol = 2, scales = "free_x") + theme(legend.position = "none") + 
+    xlab("Days post treatment") + 
+    ylab("Number of infested beets") +
+    theme(panel.spacing = unit(1, "cm")) +
+    theme(plot.margin = margin(t = 0, r = 40, b = 0, l = 10), 
+          axis.title.y = element_text(size = 18, margin = margin(r = 20)),
+          axis.text = element_text(size = 16),
+          axis.title.x = element_text(margin = margin(b = 20, t = 20), size = 18),
+          strip.text = element_text(size = 20))
+
+
+legend <- cowplot::get_legend(fig1B_aphid_intensity)
+
+do.call("grid.arrange", 
+        c(list(rectangle_fig1A, 
+               fig1A + theme(plot.margin = margin(t = 30, r = 20)), 
+               rectangle_fig1B, 
+               fig1B_aphid_intensity + theme(legend.position = "none"),
+               fig1B_aphid_prevalence), list(legend), list(ncol = 1, 
+             layout_matrix = rbind(c(1), c(2), c(3), c(4), c(5), c(6)), heights = c(0.12, 1.2, 0.12, 1, 1, 0.12))))
 ```
+
+
+
 
 ## Model
 ### Specification
@@ -168,121 +231,23 @@ The model parameters were estimated using a Bayesian inference with a Markov cha
 
 The convergence of the MCMC algorithm was checked by inspecting the mixing of the two Markov chains and monitoring the Gelman-Rubin diagnosis statistics (@gelman1992inference). We then computed the posterior mean of the pesticide treatment efficacy (defined by @eq-Efficacy) as well as its 95% credibility interval. The code used to fit the model is provided below.
 
+
+::: {.callout-note}
+The following code presents the inference on an extract fo the real 
+dataset, which includes both trials of figure 1B (2020 - B1A97 ; 2020 - 
+u1CwE). It is  a demo for the "50% Y / 50% Z" scenario and we set here the 
+number of adaptation and iteration to 2000 in order to reduce computation 
+time.
+:::
+
  
-```{r inference_example_real_data, cache = FALSE, eval = TRUE, results = 'hide'}
-# The following code presents the inference on an extract fo the real 
-# dataset, which includes both trials of figure 1B (2020 - B1A97 ; 2020 - 
-# u1CwE). It is  a demo for the "50% Y / 50% Z" scenario and we set here the 
-# number of adaptation and iteration to 2000 in order to reduce computation 
-# time.
-
-# Jags code for the model  #################################################
-modelstringYZ = "
-    model {
-
-        # Likelyhood #####################################################
-        for (i in 1:Q){
-            Y[i] ~ dpois(N[i] * lb[i])
-            Z[i] ~ dbinom(pi[i], N[i])
-
-            log(lb[i]) = beta0[ID[i]] + gamma0[INSEC[i]] + (alpha1 + 
-                         gamma1[INSEC[i]]) * TIME[i] + u[ST[i]] + epsi[i]
-
-            pi[i] = 1 - exp(- lb[i])
-            epsi[i] ~ dnorm(0, pi_eps)
-        }
-
-        for (j in 1:K){
-            beta0[j] ~ dnorm(alpha0, tau0)
-        }
-
-        for (c in 1:M){
-            u[c] ~ dnorm(0, invchi)
-        }
-
-        gamma0[1] = 0
-        gamma1[1] = 0
-
-        # Priors #########################################################
-        for (s in 2:L){
-            gamma0[s] ~ dnorm(0, 0.001)
-            gamma1[s] ~ dnorm(0, 0.001)
-        }
-
-        alpha0 ~ dnorm(0, 0.001)
-        alpha1 ~ dnorm(0, 0.001)
-        sigma0 ~ dunif(0, 10)
-        chi ~ dunif(0, 10)
-        eta ~ dunif(0, 10)
-
-        # Derived Quantities #############################################
-        tau0 = pow(sigma0, -2)
-        invchi = pow(chi, -2)
-        pi_eps = pow(eta, -2)
-
-        for (h in 2:L){
-            for(t in 1 : T){
-                Eff[h, t]  = (1 - exp(gamma0[h] + gamma1[h] * 
-                             TIME_unique[t])) * 100
-            }
-        }  
-    }
-"
-
-writeLines(modelstringYZ, con  =  "Files_for_code/modelYZ.txt")
-############################################################################
-
-
-# Inference example on the extract of the real dataset #####################
-load(file = "Files_for_code/real_data_extract.Rdata")
-data = real_data_extract %>% 
-    mutate(tscaled = scale(DPT), st = paste(ID, Insecticide))
-
-# Building scenarios -------------------------------------------------------
-scenarioY = data %>% mutate(Z = NA)
-scenarioYhalfZhalf = data %>% mutate(Y = ifelse(ID == "2020 - B1A97", Y, NA), 
-                                     Z = ifelse(ID == "2020 - B1A97", NA, Z))
-scenarioYhalf = data %>% filter(ID == "2020 - B1A97") %>% mutate(Z = NA)
-scenarioZhalf = data %>% filter(ID == "2020 - u1CwE") %>% mutate(Y = NA)
-# ---------------------------------------------------------------------------
-
-data = scenarioYhalfZhalf
-
-Y = data$Y;   Q = length(Y);   N = data$N;   Z = data$Z
-
-ID = as.numeric(as.factor(as.character(data$ID)));   
-INSEC = as.numeric(as.factor(as.character(data$Insecticide)));   
-TIME = as.numeric(data$tscaled);   
-ST = as.numeric(as.factor(as.character(data$st)));   
-
-K = length(unique(ID));   L = length(unique(INSEC));   
-M = length(unique(ST));   
-
-df_TIME = suppressMessages(data %>% 
-    group_by(DPT, tscaled) %>% 
-    summarise(n = n()) %>% as.data.frame)
-
-TIME_unique = approx(df_TIME$DPT, df_TIME$tscaled, xout = c(6, 12))$y;   
-T = length(unique(TIME_unique))
-
-data_jags = list(
-              "Y" = Y, "Z" = Z, "Q" =  Q, "ID" = ID, "INSEC" = INSEC, 
-              "TIME" = TIME, "ST" = ST, "K" = K, "L" = L, "M" = M, 
-              "N" = N, "T" = T, "TIME_unique" = TIME_unique
-            )
-
-nadapt = 2000;   niter = 2000
-
-model <- jags.model("Files_for_code/modelYZ.txt", data = data_jags, 
-					n.chains = 2, n.adapt = nadapt)
-
-samples <- coda.samples(model, 
-                        variable.names = c("gamma0", "gamma1", "Eff"), 
-                        n.iter = niter, thin = 10)
-save(samples, file = "Files_for_code/Results/Real_data/samples.Rdata")
-############################################################################
+```{r inference_example_real_data, cache = TRUE, results = 'hide'}
+#| echo: true
+#| eval: false
+#| file: scripts/inference_example_real_data.R
 ```
 
+\
 In practice, it is common that only $Y$ or $Z$ data are available in some of the trials. In this case, the resulting dataset includes observations of $Y$ in some trials and observations of $Z$ in others. The dataset may even include one type of observations only, either $Y$ or $Z$, in all trials. Here, we define four scenarios with contrasted levels of $Y$ and $Z$ availability in order to evaluate the consequences of using different types of datasets. We consider four datasets including trials with observations of $Y$, with observations of $Z$, or with both types of observation in different proportions (Table 2). The dataset "100% Y" includes Y data collected in the 32 trials. The dataset "50%Y" includes Y data collected in the 17 trials for which no Z observation is available. The dataset "50% $Z$" includes the Z data collected in the 15 trials for which Z observations are available. The dataset "50% $Y$ - 50% $Z$" includes $Y$ data collected in 17 trials and $Z$ data collected in the other 15 trials. The later dataset does include any trial reporting both $Y$ and $Z$ data. 
     
 The hierarchical model defined above is fitted to each dataset in turn. Each fitted model is then used to compute the posterior mean and 95% credibility interval of $Ef_{jt}$ for each treatment at $t$=6 and 12 days after pesticide application. 
@@ -353,6 +318,8 @@ The code used to perform the simulations is presented below.
 #| file: functions/simu_data.R 
 ```
 
+\
+
 ::: {.callout-note}
 The following code presents the inference for one seed. As the calculus
 time is growing fast with the number of trials and the number of sampled
@@ -367,168 +334,20 @@ these simulations.
 
 
 
-```{r simulations, cache = FALSE, eval = TRUE, results = 'hide'}
-J = 4;   T = 3;   N = 10;   K = 4;
-
-Block = c(1 : K);   Band = c(1 : J);   
-Beet = c(1 : N);   DPT = seq(0, 12, length.out = T);     
-
-alpha0 = 0.5;   gamma0 = c(0, - 0.13, - 1.13, - 1.24);       
-alpha1 = 0.16;   gamma1 = c(0, 0.24, - 0.14, - 0.15);
-sig0 = 1.87;   chi = 0.27;   eta = 0.98      
-
-############################################################################
-
-# Building scenarios #######################################################
-# Scenarios "50% Y" and "50% Z" are obtained from scenarios "100% Y" and 
-# "100% Z", respectively. For example "50% Y" scenario with 40 trials 
-# corresponds to "100% Y" with 20 trials.
-
-seed = 1;   I = 10
-data = suppressMessages(simu_data(seed = seed, I = I))
-
-scenarios = list(
-    Y = data$dataYZ %>% mutate(Z = NA),
-    Z = data$dataYZ %>% mutate(Y = NA),
-    YhalfZhalf = data$dataYZ %>% mutate(Y = ifelse(ID <= (I / 2), NA, Y), 
-                                        Z = ifelse(ID > (I / 2), NA, Z)),
-    YhalfZ = data$dataYZ %>% mutate(Y = ifelse(ID <= (I / 2), NA, Y)),
-    YZ = data$dataYZ,
-    W = data$dataW
-)
-#############################################################################
-
-
-# Inference #################################################################
-nadapt = 2000;   niter = 2000
-
-res_inf = NULL
-
-# Inference YZ --------------------------------------------------------------
-ID = as.numeric(as.factor(as.character(scenarios$Y$ID)));   
-INSEC = as.numeric(as.factor(as.character(scenarios$Y$Insecticide)));   
-TIME = as.numeric(scenarios$Y$tscaled);   
-ST = as.numeric(as.factor(as.character(scenarios$Y$st)));
-
-K = length(unique(ID));   
-L = length(unique(INSEC));   
-M = length(unique(ST))
-
-TIME_unique = unique(scenarios$Y$tscaled)[2 : 3]  
-T = length(unique(TIME_unique))
-
-for(i in (1 : 5)){
-    Y = scenarios[[i]]$Y;   Z = scenarios[[i]]$Z;   
-    N = scenarios[[i]]$N;   Q = length(Y)   
-
-    data_jags = list(
-                  "Y" = Y, "Z" = Z, "Q" =  Q, "ID" = ID, "INSEC" = INSEC, 
-                  "TIME" = TIME, "ST" = ST, "K" = K, "L" = L, "M" = M, 
-                  "N" = N, "T" = T, "TIME_unique" = TIME_unique
-                )
-
-    model <- jags.model("Files_for_code/modelYZ.txt", data = data_jags, 
-						n.chains = 2, n.adapt = nadapt)
-
-    samples <- coda.samples(model, 
-                            variable.names = c("gamma0", "gamma1", "Eff"), 
-                            n.iter = niter, thin = 10)
-    
-    bind = list(samples);   
-    names(bind) = paste("samples", names(scenarios)[i], sep = "_")
-    
-    res_inf = res_inf %>% append(bind)
-}
-
-# Inference W ---------------------------------------------------------------
-ID = as.numeric(as.factor(as.character(scenarios$W$ID)));   
-INSEC = as.numeric(as.factor(as.character(scenarios$W$Insecticide)));   
-TIME = as.numeric(scenarios$W$tscaled);   
-ST = as.numeric(as.factor(as.character(scenarios$W$st)));
-SBIT = as.numeric(as.factor(as.character(scenarios$W$sbit)))
-
-K = length(unique(ID));   L = length(unique(INSEC));   
-M = length(unique(ST));   X = length(unique(SBIT))
-
-TIME_unique = unique(scenarios$W$tscaled)[2 : 3]  
-T = length(unique(TIME_unique))
-
-W = scenarios$W$W;   Q = length(W)
-
-data_jags = list(
-             "W" = W, "Q" =  Q, "ID" = ID, "INSEC" = INSEC, 
-             "TIME" = TIME, "ST" = ST,  "SBIT" = SBIT, "K" = K, "L" = L, 
-             "M" = M, "X" = X, "T" = T, "TIME_unique" = TIME_unique
-            )
-
-model <- jags.model("Files_for_code/modelW.txt", data = data_jags, 
-					n.chains = 2, n.adapt = nadapt)
-
-samples <- coda.samples(model, 
-                        variable.names = c("gamma0", "gamma1", "Eff"), 
-                        n.iter = niter, thin = 10)
-
-res_inf = res_inf %>% append(list("samples_W" = samples))
-############################################################################
-
-
-# Formatting results #######################################################
-t = scenarios$Y$tscaled %>% unique
-Eff_6_true = (1 - exp(gamma0[2 : J] + gamma1[2 : J] * t[2])) * 100
-Eff_12_true = (1 - exp(gamma0[2 : J] + gamma1[2 : J] * t[3])) * 100
-truth = c(Eff_6_true, Eff_12_true, gamma0[2 : J], gamma1[2 : J])
-
-n_scenarios = length(scenarios)
-
-esti = lapply(
-         res_inf, function(x) summary(x)$statistics %>% as.data.frame %>% 
-                    rownames_to_column %>% 
-                    filter(!(grepl("gamma", rowname) & Mean == 0)) %>% 
-                    select(Mean) %>% as.matrix %>% as.vector
-       )    
-
-b_inf = lapply(
-          res_inf, function(x) summary(x)$quantiles %>% as.data.frame %>% 
-                    rownames_to_column %>% 
-                    filter(!(grepl("gamma", rowname) & `2.5%` == 0)) %>% 
-                    select(`2.5%`) %>% as.matrix %>% as.vector
-        )    
-
-b_sup = lapply(
-          res_inf, function(x) summary(x)$quantiles %>% as.data.frame %>% 
-                    rownames_to_column %>% 
-                    filter(!(grepl("gamma", rowname) & `2.5%` == 0)) %>% 
-                    select(`97.5%`) %>% as.matrix %>% as.vector
-        )    
-
-parameters = summary(res_inf[[1]])$statistics %>% as.data.frame %>% 
-                    rownames_to_column %>% 
-                    filter(!(grepl("gamma", rowname) & Mean == 0)) %>% 
-                    select(rowname) %>% as.matrix %>% as.vector   
-
-res = do.call(rbind, 
-              lapply(c(1 : n_scenarios), 
-                 function(x) 
-                    data.frame(Truth = truth, Scenario = names(scenarios)[x], 
-                               I = I, seed = seed, 
-                               value = esti[[x]], parameters = parameters, 
-                               b_inf = b_inf[[x]], b_sup = b_sup[[x]]
-                    )
-              )
-      )
-############################################################################
-                    
-# save(res, file = paste0("res.I.", I, ".seed.", seed, ".Rdata"))
+```{r simulations, results = 'hide'}
+#| echo: true
+#| eval: false
+#| file: scripts/simulations.R
 ```
 
 # Results
 ## Results obtained with real data
 
 ```{r load_res_real_data, cache = FALSE, echo = FALSE}
-load(file = "Files_for_code/Results/Real_data/res.Y.nadapt.150000.niter.3e+05.Rdata");   resY = res
-load(file = "Files_for_code/Results/Real_data/res.YhalfZhalf.nadapt.150000.niter.3e+05.Rdata");   resYZ = res
-load(file = "Files_for_code/Results/Real_data/res.Yhalf.nadapt.150000.niter.3e+05.Rdata");   resYhalf = res
-load(file = "Files_for_code/Results/Real_data/res.Zhalf.nadapt.150000.niter.3e+05.Rdata");   resZhalf = res
+resY = readRDS(file = "Files_for_code/Results/Real_data/res.Y.nadapt.150000.niter.3e+05.rds")
+resYZ = readRDS(file = "Files_for_code/Results/Real_data/res.YhalfZhalf.nadapt.150000.niter.3e+05.rds") 
+resYhalf = readRDS(file = "Files_for_code/Results/Real_data/res.Yhalf.nadapt.150000.niter.3e+05.rds")  
+resZhalf = readRDS(file = "Files_for_code/Results/Real_data/res.Zhalf.nadapt.150000.niter.3e+05.rds") 
 ```
 
 We present here the results obtained with real data. First, we check the convergence of the model for the scenarios defined in Table 2. We then compare the estimated values and the credibility intervals of the treatment efficacy obtained in the different scenarios.
@@ -541,9 +360,11 @@ Table 4 gives a summary of the posterior distributions of the model parameters a
 
 
 
-```{r figure2, cache = FALSE, out.width="100%", fig.height = 7, echo = FALSE}
+```{r figure2, cache = TRUE, out.width="100%", fig.height = 7, echo = FALSE}
 #| label: fig-two
 #| fig-cap: "Model convergence - Markov chain for the model parameters and treatment efficacies, in the scenarios '50% Y' (**A**),  '50% Y / 50% Z' (**B**), '100% Y' (**C**) and '50% Z' (**D**). The x-axis presents the iteration number and the y-axis presents the sampled value."
+
+source(file = "functions/plot_chains.R")
 
 options(warn = - 1)
 col_background = "#e9e9e9";   col_text = "black"
@@ -552,19 +373,19 @@ nrow = 3
 nbreaks = 3
 strip_size = 5
 
-fig2A = suppressMessages(f_plot_chains(resYhalf, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
+fig2A = suppressMessages(plot_chains(resYhalf, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
 	scale_y_continuous(n.breaks = nbreaks) + theme(strip.text = element_text(size = strip_size))
 my_g2A <- grobTree(rectGrob(gp = gpar(fill = col_background)), textGrob("A", x = 0.5, hjust = 0.5, gp = gpar(col = col_text, cex = cex, fontface = "bold")))
 
-fig2B = suppressMessages(f_plot_chains(resYZ, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
+fig2B = suppressMessages(plot_chains(resYZ, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
 	scale_y_continuous(n.breaks = nbreaks) + theme(strip.text = element_text(size = strip_size))
 my_g2B <- grobTree(rectGrob(gp = gpar(fill = col_background)), textGrob("B", x = 0.5, hjust = 0.5, gp = gpar(col = col_text, cex = cex, fontface = "bold")))
 
-fig2C = suppressMessages(f_plot_chains(resY, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
+fig2C = suppressMessages(plot_chains(resY, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) + xlab("") +
 	scale_y_continuous(n.breaks = nbreaks) + theme(strip.text = element_text(size = strip_size))
 my_g2C <- grobTree(rectGrob(gp = gpar(fill = col_background)), textGrob("C", x = 0.5, hjust = 0.5, gp = gpar(col = col_text, cex = cex, fontface = "bold")))
 
-fig2D = suppressMessages(f_plot_chains(resZhalf, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) +
+fig2D = suppressMessages(plot_chains(resZhalf, nrow = nrow) + ylab("Sampled value") + scale_x_continuous(breaks = c(0, 1.5e4, 3e4))) +
 	scale_y_continuous(n.breaks = nbreaks) + theme(strip.text = element_text(size = strip_size), axis.title.x = element_text(margin = margin(t = 5)))
 my_g2D <- grobTree(rectGrob(gp = gpar(fill = col_background)), textGrob("D", x = 0.5, hjust = 0.5, gp = gpar(col = col_text, cex = cex, fontface = "bold")))
 
@@ -573,9 +394,11 @@ grid.arrange(my_g2A, fig2A, my_g2B, fig2B, my_g2C, fig2C, my_g2D, fig2D, heights
 
 \
 
-```{r figure3, cache = FALSE, out.width="100%", fig.height = 7, echo = FALSE}
+```{r figure3, cache = TRUE, out.width="100%", fig.height = 7, echo = FALSE}
 #| label: fig-three
 #| fig-cap: "Model convergence - Gelman-Rubin statistics for the parameters of the model (@eq-model_W - @eq-model_Z) and for treatment efficacies (@eq-Efficacy), according to the scenarios 50% Y (**A**),  50% Y / 50% Z (**B**), 100% Y (**C**) and 50% Z (**D**). The x-axis presents the iteration number and the y-axis presents the Gelman-Rubin statistic."
+
+source(file = "functions/gelman.plot2.R")
 
 margey = 5
 margex = 10
@@ -650,7 +473,7 @@ tab4 %>%
 
 @fig-four presents the posterior means and the 95% credibility intervals of treatment efficacies at 6 days (A) and 12 days (B) after pesticide spray, for the "100% Y", "50% Y / 50% Z", "50% Y" and "50% Z" scenarios. Different scenarios are indicated by different colors. The x-axis presents the efficacy and the y-axis presents the treatments. Overall, the results obtained are consistent across scenarios; Teppeki and Movento show higher mean efficacies than Mavrik Jet, and the credibility intervals are narrower for Teppeki and Movento than for Mavrik Jet in all scenarios. The credibility interval of the "100% Y" scenario is narrower than that of the "50% Y / 50% Z" scenario, which is itself narrower than that of the "50% Y" and "50% Z" scenarios. Table 5 quantifies the differences in the sizes of the credibility intervals and present the reduction percentage in the credibility interval sizes of the "100% Y", "50% Y / 50% Z" and "50% Z" scenarios, compared to the "50% Y" scenario, for all the treatment efficacies at 6 days (third column) and at 12 days (fourth column) after pesticide spray. A positive (negative) value corresponds to an increase (decrease) of the credibility interval size compared to "50% Y". For example, the credibility interval size obtained for the efficacy of Movento at 6 days is 40.5% smaller with the "100% Y" scenario than with the "50% Y" scenario. Overall, the credibility interval sizes obtained with the "100% Y" scenario are 25 to 45% smaller than those obtained with the "50% Y" scenario. This indicates that the accuracy of the estimated treatment efficacies is improved by doubling the number of Y observations. Results show that the credibility intervals are often larger with "50% Z" than with "50% Y", suggesting that better esimtations are obtained using Y than Z when only a limited number of data is available, at least in this case study. Interestingly, the sizes of the credibility intervals are smaller by about 25% with "50% Y / 50% Z" compared to "50% Y", showing that the combination of Y and Z observations collected in different trials in beneficial and lead to a reduction of the uncertainty in the estimated treatment efficacy. The latter result illustrates how the estimation of treatment efficacy could be improved by combining trials with prevalence data and trials with intensity data.
 
-```{r figure4, cache = FALSE, echo=FALSE, out.width = "100%", fig.height = 2.6}
+```{r figure4, cache = TRUE, echo=FALSE, out.width = "100%", fig.height = 2.6}
 #| label: fig-four
 #| fig-cap: "Estimated treatment efficacies after 6 days (**A**) and after 12 days (**B**), with their credibility intervals. Colors correspond to the different scenarios."
 
@@ -790,7 +613,7 @@ ggplot(df_IC) + geom_point(aes(x = P, y = Ordonnee, color = Data), size = 1) +
 
 
 
-```{r table5}
+```{r table5, cache = TRUE}
 #|echo: false
 cbind(df_len6, df_len12 %>% select(- Data, - Insecticide)) %>% 
   kbl(booktabs = TRUE, caption = "Differences in the sizes of the 95 credibility intervals (CI) of the estimated treatment efficacies for the scenarios 50 Y / 50 Z, 50 Z and 100 Y, compared to 50 Y. The difference is given in percentage. A positive (negative) value indicates an increase (decrease) of the credibility interval size. The third column indicates differences for the efficacy at 6 days after pesticide spray, and the fourth column indicates the difference for the efficacy at 12 days.") %>% 
@@ -804,8 +627,8 @@ cbind(df_len6, df_len12 %>% select(- Data, - Insecticide)) %>%
 ## Results obtained by simulation
 
 ```{r load_res_simulations, cache = FALSE, echo = FALSE}
-load(file = "Files_for_code/Results/Simulations/df_col_simu.Rdata")
-load(file = "Files_for_code/Results/Simulations/res_simu_sigma_1.87.Rdata")
+df_col_simu = readRDS(file = "Files_for_code/Results/Simulations/df_col_simu.rds")
+res_simu_sigma_1.87 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_sigma_1.87.rds")
 
 res_simu = res_simu_sigma_1.87
 
@@ -829,7 +652,7 @@ In this section, we consider the situation where only one type of observation is
 The parameters used to generate the data are given in table 6.
 
 
-```{r table6}
+```{r table6, cache = TRUE}
 #|echo: false
 
 tab6 = data.frame(Parameters = c(
@@ -861,7 +684,7 @@ tab6 %>%
 @fig-five represents the $E_{\gamma}$ (@eq-E_gamma) (**A**), $E_{Ef_6}$ (@eq-E_efficacy) (**B**) and $E_{Ef_{12}}$ (@eq-E_efficacy) (**C**) evaluation criteria for the "50% Z", "50% Y" and "50% Y / 50% Z" scenarios (different scenarios are indicated by different colors. The x-axis presents the number of trials and the y-axis the value of the criterion, averaged over the simulated data sets. For each number of trials and for each criterion, we observe that scenario "50% Y / 50% Z" gives a more accurate estimate than scenario "50% Y" which itself gives a more accurate estimate than scenario "50% Z". For example, for the efficacy at 6 days with 40 trials, the mean absolute error of scenario "50% Y" is 10% less than the mean absolute error of scenario "50% Z" (0.38 vs 0.42). The mean absolute error of scenario "50% Y / 50% Z" is 35% less than that of scenario "50% Z" (0.26 vs 0.42). The values of the three criteria decrease with the number of trials. The $E_{\gamma}$ criterion decreases from 0.62 with 20 trials to 0.32 with 80 trials for the "50% Y / 50% Z" scenario. A value of 20 trials is therefore not sufficient to obtain an accurate estimate of the parameters.
 
 
-```{r figure5, cache = FALSE, out.width="100%", fig.height = 2.5, echo = FALSE}
+```{r figure5, cache = TRUE, out.width="100%", fig.height = 2.5, echo = FALSE}
 #| label: fig-five
 #| fig-cap: "Values of the $E_{\\gamma}$ (@eq-E_gamma) (**A**), $E_{Ef_6}$ (@eq-E_efficacy) (**B**) and $E_{Ef_{12}}$ (@eq-E_efficacy) (**C**) mean absolute error criteria for the '50% Z', '50% Y' and '50% Y / 50% Z' scenarios. The x-axis presents the number of trials and the y-axis presents the mean absolute error, averaged over the 974 simulated datasets. Different colors correspond to different scenarios."
 
@@ -879,7 +702,7 @@ ggplot(res_temp %>% filter(!grepl("best", name))) + geom_point(aes(x = I, y = va
 @fig-six presents the percentages of cases where the best treatment at 6 days (A) and 12 days (B) has been correctly identified for the "50% Y", "50% Z" and "50% Y / 50% Z" scenarios. The x-axis presents the number of trials and the y-axis the percentage of cases where the treatment identification is correct. In general, the best treatment is better identified when the number of trials increases. With the "50% Y / 50% Z" scenario, the best treatment at 6 days is well identified in 69% of cases with 20 trials and in 85% of cases with 80 trials. For each number of trials, the percentage of correctly identification is higher for the "50% Y / 50% Z" scenario than for the other two, and the scenario "50% Y" generally gives better results than the scenario "50% Z", except at 6 days with 20 trials. For example, at 12 days after treatment and with 40 trials, the percentage of correct identification is 5% higher with scenario "50% Y - 50% Z" than with scenario "50% Y" (78 vs 73), and 4% higher with the scenario "50% Y" than with scenario "50% Z" (73 vs 69). These results show the interest of combining prevalence and intensity data for assessing the efficacy of treatments and indentifying the best treatments.
 
 
-```{r figure6, cache = FALSE, out.width="100%", fig.height = 3, echo = FALSE}
+```{r figure6, cache = TRUE, out.width="100%", fig.height = 3, echo = FALSE}
 #| label: fig-six
 #| fig-cap: "Comparison of proportion cases where the best treatment is correctly identified in the '50% Z', '50% Y' and '50% Y / 50% Z' scenarios. The x-axis represents the number of trials and the y-axis represents the percentage of cases where the best treatment has been correctly identified at 6 days (A) and 12 days (B), over the 974 simulated datasets. Different colors correspond to different scenarios."
 
@@ -898,7 +721,7 @@ We now consider a situation where prevalence is measured in each trial and inten
  
  @fig-seven presents the evaluation criteria $E_{\gamma}$ (Fig 7A), $E_{Ef_6}$ (Fig 7B) and $E_{Ef_{12}}$ (Fig. 7C) for the scenarios "100% Z", "50% Y", "100% Z / 50% Y" and "50% Y / 50% Z". The x-axis presents the number of trials and the y-axis presents the value of the criterion, averaged over the number of simulated data sets. Results show that the mean absolute errors are lower in scenarios "100% Z / 50% Y" and "50% Y / 50% Z" than in "100% Z", and that the mean absolute errors are lower in the "100% Z" scenario than in the "50% Y" scenario. For example, considering the treatment efficacy at 12 days with 40 trials (Fig. 7C), the mean absolute errors are 13% lower in scenarios "100% Z / 50% Y" and "50% Y / 50% Z" than in "100% Z" (0.30 vs 0.34), and the mean absolute error is 11% lower in "100% Z" than in "50% Y" (0.34 vs 0.38). Clearly, adding intensity data to prevalence data improves the accuracy of the estimations. The mean absolute errors decrease with the number of trials. For example, the $E_{\gamma}$ criterion decreases from 0.62 with 20 trials to 0.32 with 80 trials for the "50% Y / 50% Z" scenario. As noted above, 20 trials is clearly not sufficient to obtain accurate results.
 
-```{r figure7, cache = FALSE, out.width="100%", fig.height = 2.5, echo = FALSE}
+```{r figure7, cache = TRUE, out.width="100%", fig.height = 2.5, echo = FALSE}
 #| label: fig-seven
 #| fig-cap: "Values of $E_{\\gamma}$ (@eq-E_gamma) (**A**), $E_{Ef_6}$ (@eq-E_efficacy) (**B**) and $E_{Ef_{12}}$ (@eq-E_efficacy) (**C**) for the '100% Z', '50% Y', '100% Z / 50% Y' and '50% Y / 50% Z' scenarios. The x-axis presents the number of trials and the y-axis presents the absolute error averaged over the 974 simulated datasets. Different colors correspond to different scenarios."
 
@@ -921,7 +744,7 @@ The three parameter sets used to generate the data are given in Table 7 and are 
 
 
 
-```{r table7}
+```{r table7, cache = TRUE}
 #|echo: false
 
 tab7 = data.frame(Parameters = c(
@@ -959,7 +782,8 @@ In case A (Table 7), the distribution of Z is such that Z is rarely close to 1 a
 #| label: fig-height
 #| fig-cap: "Comparison of the '100% Y', '100% Z', '100% Y / 100% Z' and '100% W' scenarios according to the distribution of $Z$ and the number of trials, using the $E_{\\gamma}$ criterion (@eq-E_gamma). **A**, **B** and **C** correspond to different $Z$ distributions which are given by A.2, B.2 and C.2 (distribution for a number of trials equal to 40). A, B and C respectively correspond to $\\alpha_0 =$ -1, 1 and 2. The details of the simulation parameters are given in table 7. A1, B1 and C1 represent the absolute error $E_{\\gamma}$ averaged over the 974 simulated datasets as a function of the number of trials. Colors correspond to the different scenarios."
 
-load(file = "Files_for_code/Results/Simulations/res_simu_q3_1.Rdata");   load(file = "Files_for_code/Results/Simulations/res_simu_q3_2.Rdata")
+res_simu_q3_1 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_q3_1.rds");   
+res_simu_q3_2 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_q3_2.rds")
 
 res_simu_q3_1 = res_simu_q3_1 %>% mutate(Type = recode(Type, "100% Y - 100% Z" = "100% Y / 100% Z"))
 
