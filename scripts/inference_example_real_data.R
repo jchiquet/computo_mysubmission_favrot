@@ -103,5 +103,4 @@ model <- jags.model("Files_for_code/modelYZ.txt", data = data_jags,
 samples <- coda.samples(model, 
                         variable.names = c("gamma0", "gamma1", "Eff"), 
                         n.iter = niter, thin = 10)
-save(samples, file = "Files_for_code/Results/Real_data/samples.Rdata")
 ############################################################################

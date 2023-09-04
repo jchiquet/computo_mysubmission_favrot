@@ -47,7 +47,7 @@ format:
   computo-pdf: default
 ---
 
-```{r dependencies, cache = TRUE, include = FALSE}
+```{r dependencies, cache = FALSE, include = FALSE}
 library(ggplot2);
 library(tidyverse);
 library(gridExtra);
@@ -279,11 +279,11 @@ these simulations.
 # Results
 ## Results obtained with real data
 
-```{r load_res_real_data, cache = TRUE, echo = FALSE}
-load(file = "Files_for_code/Results/Real_data/res.Y.nadapt.150000.niter.3e+05.Rdata");   resY = res
-load(file = "Files_for_code/Results/Real_data/res.YhalfZhalf.nadapt.150000.niter.3e+05.Rdata");   resYZ = res
-load(file = "Files_for_code/Results/Real_data/res.Yhalf.nadapt.150000.niter.3e+05.Rdata");   resYhalf = res
-load(file = "Files_for_code/Results/Real_data/res.Zhalf.nadapt.150000.niter.3e+05.Rdata");   resZhalf = res
+```{r load_res_real_data, cache = FALSE, echo = FALSE}
+resY = readRDS(file = "Files_for_code/Results/Real_data/res.Y.nadapt.150000.niter.3e+05.rds")
+resYZ = readRDS(file = "Files_for_code/Results/Real_data/res.YhalfZhalf.nadapt.150000.niter.3e+05.rds") 
+resYhalf = readRDS(file = "Files_for_code/Results/Real_data/res.Yhalf.nadapt.150000.niter.3e+05.rds")  
+resZhalf = readRDS(file = "Files_for_code/Results/Real_data/res.Zhalf.nadapt.150000.niter.3e+05.rds") 
 ```
 
 We present here the results obtained with real data. First, we check the convergence of the model for the scenarios defined in Table 2. We then compare the estimated values and the credibility intervals of the treatment efficacy obtained in the different scenarios.
@@ -562,9 +562,9 @@ cbind(df_len6, df_len12 %>% select(- Data, - Insecticide)) %>%
 
 ## Results obtained by simulation
 
-```{r load_res_simulations, cache = TRUE, echo = FALSE}
-load(file = "Files_for_code/Results/Simulations/df_col_simu.Rdata")
-load(file = "Files_for_code/Results/Simulations/res_simu_sigma_1.87.Rdata")
+```{r load_res_simulations, cache = FALSE, echo = FALSE}
+df_col_simu = readRDS(file = "Files_for_code/Results/Simulations/df_col_simu.rds")
+res_simu_sigma_1.87 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_sigma_1.87.rds")
 
 res_simu = res_simu_sigma_1.87
 
@@ -714,11 +714,12 @@ tab7 %>%
 @fig-height (A.1, B.1 and C.1) shows the mean absolute error $E_{\gamma}$ (@eq-E_gamma) as a function of the number of trials for the four scenarios "100% Y", "100% Z", "100% Y / 100% Z" and "100% W". @fig-height (A.2, B.2 and C.2) shows the distributions of infested plants with 40 trials corresponding to the three values of $\alpha_0$ reported in Table 7.
 In case A (Table 7), the distribution of Z is such that Z is rarely close to 1 and often lower than 0.5 (@fig-height A.2). In case C, the distribution of Z is such that Z is often very close to 1 (100% of plants infested). Case B is intermediate. The accuracy of the estimated values of the model parameters $\gamma$ is better with scenario "100% Y" than with scenario "100% Z", for all number of trials. The advantage of "100% Y" is stronger in case of high pest prevalence (i.e., cases B and C) but very small in case of low pest prevalence (case A). For example, with 20 trials, the mean absolute error is 27% lower in the scenario "100% Y" than in "100% Z" for parameter set C (0.55 vs. 0.75), 10% lower for parameter set B (0.55 vs. 0.62), and not different for parameter set A (0.64). The "100% W" scenario leads to similar results as "100% Y", regardless of $\alpha_0$ and the number of trials. Results obtained with "100% Y / 100% Z" are generally similar to those obtained with "100% Y" and "100% W" but better than those obtained with the scenario "100% Z" in cases B and C. Here again, results show that 20 trials are not sufficient to obtain accurate parameter estimates.
 
-```{r figure8, cache = TRUE, out.width="100%", fig.height = 6, echo = FALSE}
+```{r figure8, cache = FALSE, out.width="100%", fig.height = 6, echo = FALSE}
 #| label: fig-height
 #| fig-cap: "Comparison of the '100% Y', '100% Z', '100% Y / 100% Z' and '100% W' scenarios according to the distribution of $Z$ and the number of trials, using the $E_{\\gamma}$ criterion (@eq-E_gamma). **A**, **B** and **C** correspond to different $Z$ distributions which are given by A.2, B.2 and C.2 (distribution for a number of trials equal to 40). A, B and C respectively correspond to $\\alpha_0 =$ -1, 1 and 2. The details of the simulation parameters are given in table 7. A1, B1 and C1 represent the absolute error $E_{\\gamma}$ averaged over the 974 simulated datasets as a function of the number of trials. Colors correspond to the different scenarios."
 
-load(file = "Files_for_code/Results/Simulations/res_simu_q3_1.Rdata");   load(file = "Files_for_code/Results/Simulations/res_simu_q3_2.Rdata")
+res_simu_q3_1 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_q3_1.rds");   
+res_simu_q3_2 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_q3_2.rds")
 
 res_simu_q3_1 = res_simu_q3_1 %>% mutate(Type = recode(Type, "100% Y - 100% Z" = "100% Y / 100% Z"))
 
