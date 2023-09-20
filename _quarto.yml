@@ -1,7 +1,0 @@
-project:
-  title: "template-computo-quarto"
-
-format:
-  computo-html:
-    code-fold: true
-
