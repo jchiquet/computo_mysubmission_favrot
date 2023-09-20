@@ -58,7 +58,8 @@ writeLines(modelstringYZ, con  =  "Files_for_code/modelYZ.txt")
 
 
 # Inference example on the extract of the real dataset #####################
-load(file = "Files_for_code/real_data_extract.Rdata")
+real_data_extract = readRDS(file = "data/real_data_extract.rds")
+
 data = real_data_extract %>% 
   mutate(tscaled = scale(DPT), st = paste(ID, Insecticide))
 

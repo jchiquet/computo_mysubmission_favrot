@@ -1,0 +1,43 @@
+---
+title: "Supplementary material"
+format: pdf
+---
+
+```{r, message = FALSE, echo = FALSE}
+library(ggplot2)
+```
+
+
+# Model adjustment and comparison to the negative binomial model
+
+To check the model's fit to the data, we performed a posterior predictive check of our model to check that the data were compatible with the model assumptions. To do so, we computed the probability of exceeding each individual data with the fitted model (2). Note that the number of pest individuals per plant are not available in practice; the data correspond to observed numbers of pest individuals for groups of $N_i$ plants. Based on the posterior probability check, the computed probabilities were all falling in the range 0.22-0.93 (except for the observations equal to 0, for which the probability of being greater was equal to 1), and were thus not extreme. This result indicates that the model specified is not incompatible with the observed data and that the over-dispersion was correctly taken into account.
+
+We also fitted a new model including a negative binomial distribution instead of a Poisson distribution. The results were almost identical between both types of model. See the figure below.
+
+```{r, echo = FALSE}
+MCMC_samples_of_predictions = readRDS(file = "data/MCMC_samples_of_predictions.rds")
+```
+
+
+```{r, echo = FALSE}
+#| fig-cap: "Posterior predictive check, The X-axis is on a logarithmic scale and represents the number of aphids increased by 1."
+
+ggplot(MCMC_samples_of_predictions) +
+    geom_point(aes(x = Y + 1, y = posterior_predictive_check)) +
+    scale_x_continuous(trans = "log2") + 
+    ylab("Posterior probability") +
+    xlab("Observed number of aphids") +
+    facet_wrap(~ model)
+```
+
+
+```{r, echo = FALSE}
+#| fig-cap: "Observed vs predicted values"
+
+ggplot(MCMC_samples_of_predictions) +
+    geom_point(aes(x = Y, y = prediction)) +
+    xlab("Observed number of aphids") +
+    ylab("Predicted number of aphids") +
+    facet_wrap(~ model)
+```
+
