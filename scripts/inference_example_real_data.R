@@ -4,7 +4,7 @@
 modelstringYZ = "
     model {
 
-        # Likelyhood #####################################################
+        # Likelihood #####################################################
         for (i in 1:Q){
             Y[i] ~ dpois(N[i] * lb[i])
             Z[i] ~ dbinom(pi[i], N[i])

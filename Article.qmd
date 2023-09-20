@@ -45,7 +45,10 @@ draft: false
 published: false
 format:
   computo-pdf: default
+header-includes:
+  - \usepackage{lineno}
 ---
+
 
 ```{r dependencies, cache = FALSE, include = FALSE}
 library(ggplot2);
@@ -70,28 +73,31 @@ theme_replace(axis.text = element_text(size = x),   axis.title.x = element_text(
 options(ggplot2.discrete.fill = list("#67c5a7"))
 ```
 
+\linenumbers
+
+
 # Introduction
 
-In plant epidemiology, pest and disease presence can be measured in a host population using different metrics. A first metric measures the presence/absence of the pest in the individuals (plants) of the host population. This metric is often called prevalence or incidence (@madden1999sampling, @shaw2018metrics). The prevalence describes the proportion of the host population in which the pest is present. This metric is relevant and widely used, but it does not account for the number of pest individuals per host individual. With the prevalence, a plant infected by one single pest individual (e.g., an insect) and a plant infected by many pest individuals both represents one infected plant. For this reason, pest abundance is sometimes assessed using another metric representing the average number of pest individuals per host individual. This metric is called intensity or severity (@madden1999sampling, @shaw2018metrics), and describes the intensity of the disease in the target population. These two metrics do not generally have the same requirement in terms of working time; measuring intensity is indeed often more time demanding than measuring prevalence, in particular when the pest individuals are small, numerous, and difficult to detect. 
+In plant epidemiology, pest and disease presence can be measured in a host population using different metrics. A first metric measures the presence/absence of the pest in the individuals (plants) of the host population. This metric is often called prevalence or incidence (@madden1999sampling, @shaw2018metrics). The prevalence describes the proportion of the host population in which the pest is present. This metric is relevant and widely used, but it does not account for the number of pest individuals per host individual. With the prevalence, a plant infected by one single pest individual (e.g., an insect) and a plant infected by many pest individuals both represents one infected plant. For this reason, pest abundance is sometimes assessed using another metric representing the average number of pest individuals per host individual. This metric is called intensity or severity (@madden1999sampling, @shaw2018metrics), and describes the intensity of the disease in the target population. These two metrics do not generally have the same requirement in terms of working time; measuring intensity takes indeed much more time than measuring prevalence because it is very tedious to count all pest individuals, especially when individuals are small, numerous, and/or difficult to detect.
 
-Pest prevalence and intensity are commonly measured in factorial field trials to test the efficacy of different treatments. In this paper, we place ourselves in an important application framework which is the evaluation of alternative pesticide treatments to neonicotinoids against aphids in sugar beet. Indeed, neonicotinoids had been a popular chemical treatment to control aphids for many years, especially in sugar beets, a major crop in Europe. Recently, neonicotinoids were recognized as presenting high risks for the environment with a negative impact a wide range of non-target organisms, including bees (@wood2017environmental, @pisa2015effects), and this familly of pesticides had been banned in several European countries. In order to find a substitute to neonicotinoids, a number of factorial field trials were conducted to compare the efficacy of different alternative treatments during several years in different countries. Each trial consists of a set of plots divided into several blocks, themselves divided into several strips on which different pesticide treatments are randomly allocated. One strip always remains untreated to serve as a control. In each strip, aphid prevalence, aphid intensity or both metrics are measured in a sample of plants (usually, 10-20 plants per strip).  Depending on the protocol and on the working time constraint, either one type or both types of metrics are measured. Consequently, for a given pest treatment, some of trials may report prevalence data while others report intensity data or both type of data. 
+Pest prevalence and intensity are commonly measured in factorial field trials to test the efficacy of different treatments. In this paper, we place ourselves in an important application framework which is the evaluation of alternative pesticide treatments to neonicotinoids against aphids in sugar beet. Indeed, neonicotinoids had been a popular chemical treatment to control aphids for many years, especially in sugar beets, a major crop in Europe. Recently, neonicotinoids were recognized as presenting high risks for the environment with a negative impact on a wide range of non-target organisms, including bees (@wood2017environmental, @pisa2015effects), and this familly of pesticides has been banned in several European countries. In order to find a substitute to neonicotinoids, a number of factorial field trials were conducted to compare the efficacy of different alternative treatments during several years in different countries. Each trial consists of a set of plots divided into several blocks, themselves divided into several strips on which different pesticide treatments are randomly allocated. One strip always remains untreated to serve as a control. In each strip, aphid prevalence, aphid intensity or both metrics are measured in a sample of plants (usually, 10-20 plants per strip).  Depending on the protocol and on the working time constraint, either one type or both types of metrics are measured. Consequently, for a given pest treatment, some trials may report prevalence data while others report intensity data or both types of data. 
     This heterogeneity raises several issues. A first issue concerns the statistical analysis of the trials reporting prevalence and intensity. Although it is easy to fit a generalized linear model to each type of data separately, it is less straightforward to fit a single model to the whole set of trials in order to obtain a single ranking of the pest treatements taking into account both types of data at the same time. Generally, factorial trials assessing treatment efficacy are analyzed with statistical models that take into account one of the two metrics but not both. Prevalence data are thus commonly analyzed using binomial generalized linear models and intensity data are frequently analyzed with Poisson generalized linear models (@michel2017framework, @LAURENT2023106140, @agresti2015foundations). As far as we know, no statistical model has been proposed to assess treatment efficacy based on the simultaneous analysis of prevalence and intensity data.
-    Another issue concerns the practical value of combining both prevalence and intensity data. It is unclear whether the simultaneous analysis of prevalence and intensity data will increase the accuracy of the estimated treatment efficacy compared to the use of a single type of data, and whether this will increase the probability of identifying the most efficient treatments. Finally, it is also unclear how future trials should be designed, in particular how many trials are required to obtain accurate estimations, and whether intensity data should be prefered to prevalence data.
+    Another issue concerns the practical value of combining both prevalence and intensity data. It is unclear whether the simultaneous analysis of prevalence and intensity data may increase the accuracy of the estimated treatment efficacy compared to the use of a single type of data, and whether this may increase the probability of identifying the most efficient treatments. Finally, it is also unclear how future trials should be designed, in particular how many trials are required to obtain accurate estimations, and whether intensity data should be prefered to prevalence data.
 
- In this paper, we propose a new flexible statistical model that can be used to rank pest treatments from trials including prevalence data, intensity data, or both. We apply it to a real dataset including trials testing the efficacy of pesticides against aphids infesting sugar beets, considering contrasted scenarios of data availability, and we show how the proposed model can be used to evaluate the efficacy of different treatments. Based on simulations, we then quantify the reduction of mean absolute errors in the estimated treatment efficacies induced by the combination of prevalence and incidence data compared to the use of a single type of data. The rest of the paper is organized as follows. First, we present the structure of the dataset including real prevalence and intensity data. Next, we describe in detail the proposed model, the inference method, and the simulation strategy. After checking the convergence of the fitting algorithm, we show how the model can be used to assess treatement efficacy. We finally present the results based on simulated data and we make several recommendations.
+ In this paper, we propose a new flexible statistical model that can be used to rank pest treatments from trials including prevalence data, intensity data, or both. We apply it to a real dataset including trials testing the efficacy of pesticides against aphids infesting sugar beets, considering contrasted scenarios of data availability, and we show how the proposed model can be used to evaluate the efficacy of different treatments. Based on simulations, we then quantify the reduction of mean absolute errors in the estimated treatment efficacies resulting from the use of both prevalence and intensity data during the statistical inference, compared to the use of exclusively either prevalence or intensity data. The rest of the paper is organized as follows. First, we present the structure of the dataset including real prevalence and intensity data. Next, we describe in detail the proposed model, the inference method, and the simulation strategy. After checking the convergence of the fitting algorithm, we show how the model can be used to assess treatement efficacy. We finally present the results based on simulated data and we make several recommendations.
 
 # Material and Method
 
 ## Desciption of the data
 
-Data were collected in 32 field trials conducted in France, Belgium and Netherlands to compare several treatments against aphids in sugar beets. Each trial consists in a plot located in a given site at a given year (site-year) divided into one to four blocks. Each of these blocks is itself divided into strips where different treatments are tested, one of these treatments being an untreated control and the others corresponding to different types of insecticide. In each strip of each block, the number of aphids was counted on a sample of 10 beet plants (intensity). The number of infested plants (prevalence) was measured as well, but only in 15 trials out of 32. The total numbers of intensity and prevalence data are equal to 1128 and 561, respectively. Note that the number of aphids was not counted on each beet plant but in the whole plant sample. Intensity and prevalence were monitored at different dates during the growing season. As shown in @fig-one A, the dataset is unbalanced as less data are available for the treatment Mavrik-jet compared to the others. Figure 1B shows that the intensity and prevalence tend to increase with time. 
+Data were collected in 32 field trials conducted in France, Belgium and the Netherlands to compare several treatments against aphids in sugar beets. Each trial consists in a plot located in a given site at a given year (site-year) divided into one to four blocks. Each of these blocks is itself divided into strips where different treatments are tested, one of these treatments being an untreated control and the others corresponding to different types of insecticide. In each strip of each block, the number of aphids was counted on a sample of 10 beet plants (intensity). The number of infested plants (prevalence) was measured as well, but only in 15 trials out of 32. The total numbers of intensity and prevalence data are equal to 1128 and 561, respectively. Note that the number of aphids was not counted on each beet plant but in the whole plant sample. Intensity and prevalence were monitored at different times after treatments. As shown in @fig-one A, the dataset is unbalanced as less data are available for the treatment Mavrik-jet compared to the others. Figure 1B shows that the intensity and prevalence tend to increase with time. 
 
 
 
-```{r, fig.width=12, fig.height=14}
+```{r figure1, cache = TRUE, fig.width=12, fig.height=14}
 #| echo: false
 #| label: fig-one 
-#| fig-cap: "Description of the dataset. **A** Number of observations according to the type of insecticide. **B** Examples of observed number of aphids averaged over the blocks (intensity) and number of infested beets out of ten (prevalence) averaged over the blocks, at different dates for two trials. Days post treatment is equal to the number of days between the observation date and the treatment. The colors represent the different treatments."
+#| fig-cap: "Description of the dataset. **A** Number of observations according to the type of insecticide. **B** Examples of observed number of aphids averaged over the blocks (intensity) and number of infested beets out of ten (prevalence) averaged over the blocks, at different dates for two trials."
 
 data_figure_1A = readRDS(file = "data/data_figure_1A.rds")
 data_figure_1B = readRDS(file = "data/data_figure_1B.rds")
@@ -184,7 +190,7 @@ The observed variables (intensity and prevalence) can be expressed as a function
 - $Y_{ijkt}$ the number of pest individuals (aphids) in the sample of $N_i$ plants collected in trial i, treatment j, block k, at time t 
 - $Z_{ijkt}$ the number of infested plants among the $N_i$ plants collected in trial i, treatment j, block k, at time t 
     
-Then, assuming the $W$s independent, we have: 
+Then, assuming the $W$s are independent, we have: 
     
 $$
 	Y_{ijkt} = \sum\limits_{s = 1}^{N_i} W_{ijkts}\ \hspace{1cm}\ Y_{ijkt} \sim \mathcal{P}(N_{i}\lambda_{ijkt})
@@ -194,7 +200,7 @@ $$
 	Z_{ijkt} = \sum\limits_{s = 1}^{N_i} \boldsymbol{1}_{W_{ijkts}>0}\ \hspace{1cm} \ Z_{ijkt} \sim \mathcal{B}(N_{i},\ \pi_{ijkt})
 $$ {#eq-model_Z}
     
-where $\pi_{ijkt} = 1-\text{exp}(-\lambda_{ijkt})$. The different quantities used by the model are defined in Table 1. 
+where $\pi_{ijkt} = 1-\text{exp}(-\lambda_{ijkt})$. The different quantities used in the model are defined in Table 1. 
 
 | | |
 --|--
@@ -208,9 +214,9 @@ $\lambda_{ijkt}$ | mean number of pest individuals (aphids) on one plant
 $\pi_{ijkt}$ | probability for a plant to be infested
 $\alpha_0$ | mean number of pest individuals (aphids) in the untreated group
 $\beta_{0i}$ | trial effect
-$\gamma_{0j}$ | treatment effect
+$\gamma_{0j}$ | effect of treatment j at time 0 (time of treatment)
 $\alpha_1$ | growth parameter of the number of pest individuals for the untreated group
-$\gamma_{1j}$ | treatment effect over time
+$\gamma_{1j}$ | effect of the treatment on the time effect (interaction between treatment j and time)
 $X_t$ | number of days post treatment
 $u_{ij}$ | random interaction between trial and treatment
 $\epsilon_{ijkt}$ | residuals
@@ -225,19 +231,17 @@ $$ {#eq-Efficacy}
 
 The quantity $\text{Ef}_{jt}$ corresponds to the expected percentage reduction of pest individuals (aphid numbers) for the jth treatment compared to the untreated group, over trials and blocks. 
 
+Our Poisson log linear model includes an additive random dispersion term associated to each individual observation ($\epsilon_{ijkt}$ in @eq-model_lambda). This is a standard and well-recognized approach to deal with over-dispersion (@harrison2014using). In order to check the model assumptions, we performed a posterior predictive check of our model to check that the data were compatible with the model assumptions. Posterior predictive check is frequently used to look for systematic discrepancies between real and simulated data (@gelman1995bayesian). To do so, we computed the probability of exceeding each individual data with the fitted model (@eq-model_lambda). The computed probabilities were all falling in the range 0.22-0.93 (except for the observations equal to 0, for which the probability of being greater was equal to 1), and were thus not extreme. This result indicates that the model specified is not incompatible with the observed data and that the over-dispersion was correctly taken into account. In addition, we fitted another model including a negative binomial distribution instead of a Poisson distribution. The results were almost identical between the two models.
+
 ### Inference on real data
 
-The model parameters were estimated using a Bayesian inference with a Markov chain Monte-Carlo method. We performed the inference using R, with the package rjags (@rjags). For each of the six dataset listed in Table 2, we fitted the model (@eq-model_lambda - @eq-model_Z) with the following weakly informative priors: $\mathcal{N}(0, 10^3)$ for the parameters $\alpha_0,\ \gamma_0,\ \alpha_1,\ \gamma_1$ and $\mathcal{U}([0, 10])$ for the parameters $\sigma_0, \chi, \eta$. We used two Markov chains with $2 \times 10^5$ iterations (after an adaptating phase of $10^5$ iterations), and we centered the time variable $t$ to facilitate the convergence.
+The model parameters were estimated using Bayesian inference with a Markov chain Monte-Carlo method. We performed the inference using R, with the package rjags (@rjags). For each of the six dataset listed in Table 2, we fitted the model (@eq-model_lambda - @eq-model_Z) with the following weakly informative priors: $\mathcal{N}(0, 10^3)$ for the parameters $\alpha_0,\ \gamma_0,\ \alpha_1,\ \gamma_1$ and $\mathcal{U}([0, 10])$ for the parameters $\sigma_0, \chi, \eta$. We used two Markov chains with $2 \times 10^5$ iterations (after an adaptating phase of $10^5$ iterations), and we centered the time variable $t$ to facilitate convergence.
 
 The convergence of the MCMC algorithm was checked by inspecting the mixing of the two Markov chains and monitoring the Gelman-Rubin diagnosis statistics (@gelman1992inference). We then computed the posterior mean of the pesticide treatment efficacy (defined by @eq-Efficacy) as well as its 95% credibility interval. The code used to fit the model is provided below.
 
 
 ::: {.callout-note}
-The following code presents the inference on an extract fo the real 
-dataset, which includes both trials of figure 1B (2020 - B1A97 ; 2020 - 
-u1CwE). It is  a demo for the "50% Y / 50% Z" scenario and we set here the 
-number of adaptation and iteration to 2000 in order to reduce computation 
-time.
+The following code presents the inference on an extract of the real dataset, which includes both trials of figure 1B (2020 - B1A97 ; 2020 - u1CwE). It is  a demo for the "50% Y / 50% Z" scenario and we set here the number of adaptation and iteration to 2000 in order to reduce computation time.
 :::
 
  
@@ -259,7 +263,7 @@ The hierarchical model defined above is fitted to each dataset in turn. Each fit
 | 50% Z       | Z observations available in 15 trials and no Y    | 
 | 50% Y / 50% Z       | Y observations available in 17 trials and Z observations available in the other 15 trials   | 
 
-: Four subdatasets defined from the original dataset (real data). {tbl-colwidths="[35,65]"}
+: Four data subsets defined from the original dataset (real data). {tbl-colwidths="[35,65]"}
 
 
 ### Simulations
@@ -276,7 +280,8 @@ We define three numbers of trials, equal to 20, 40 and 80, successively. For dat
 - Fit the model (@eq-model_W - @eq-model_Z) to each of the sub datasets according to the procedure described above based on MCMC. 
 
 At the end of this procedure, we get eight sets of estimated parameters, corresponding to the eight scenarios defined in Table 3. 
-This procedure is repeated 974 times with each time a different seed between 0 and 999, thus generating eight series of 974 sets of estimated model parameters for each trial number. 
+This procedure is repeated 1000 times with each time a different seed between 0 and 999. However, the computations performed with jags failed for 26 replicates and thus 974 replicates were available for the analysis.
+
 
 For each number of trials and each scenario defined in Table 3, the accuracy of the estimated parameters $\gamma$ (from which depend the treatment efficacies) is evaluated by computing an absolute error, averaged over the three treatments ($j$=1 corresponding to the control) as:
 
@@ -312,7 +317,7 @@ In order to determine whether the difference of performance obtained with the ty
 
 The code used to perform the simulations is presented below.
 
-```{r simulation-function}
+```{r simulation-function, cache = TRUE}
 #| echo: true
 #| eval: true 
 #| file: functions/simu_data.R 
@@ -321,9 +326,9 @@ The code used to perform the simulations is presented below.
 \
 
 ::: {.callout-note}
-The following code presents the inference for one seed. As the calculus time is growing fast with the number of trials and the number of sampled values, we set here the number of trials to 10 (I = 10) and the number of adaptations and iterations to 2000.
+The following code presents the inference for one seed. As the computation time is growing fast with the number of trials and the number of sampled values, we set here the number of trials to 10 (I = 10) and the number of adaptations and iterations to 2000.
 
-Our simulations results are obtained by running this code for I = 10, 20, 40, 80, for all seeds between 0 and 999, with a number of adaptations and iterations equal to 36000. We used the Migale server from INRAE to run these simulations.
+Our simulation results are obtained by running this code for I = 10, 20, 40, 80, for all seeds between 0 and 999, with a number of adaptations and iterations equal to 36000. We used the Migale server from INRAE to run these simulations.
 
 Scenarios "50% Y - 0% Z" and "0% Y - 50% Z" are obtained from scenarios "100% Y - 0% Z" and "0% Y - 100% Z", respectively. For example "50% Y - 0% Z" scenario with 40 trials corresponds to "100% Y - 0% Z" with 20 trials.
 :::
@@ -331,7 +336,7 @@ Scenarios "50% Y - 0% Z" and "0% Y - 50% Z" are obtained from scenarios "100% Y 
 
 
 
-```{r simulations, results = 'hide'}
+```{r simulations, results = 'hide', cache = TRUE}
 #| echo: true
 #| eval: false
 #| file: scripts/simulations.R
@@ -435,7 +440,7 @@ grid.arrange(my_g3A, fig3A, my_g3B, fig3B, my_g3C, fig3C, my_g3D, fig3D + theme(
 \
 
 
-```{r table4}
+```{r table4, cache = TRUE}
 #| echo: false
 tab4 = cbind(summary(resY)$statistics, summary(resY)$quantiles) %>% 
     as.data.frame %>%
@@ -623,7 +628,7 @@ cbind(df_len6, df_len12 %>% select(- Data, - Insecticide)) %>%
 
 ## Results obtained by simulation
 
-```{r load_res_simulations, cache = FALSE, echo = FALSE}
+```{r load_res_simulations, cache = TRUE, echo = FALSE}
 df_col_simu = readRDS(file = "Files_for_code/Results/Simulations/df_col_simu.rds")
 res_simu_sigma_1.87 = readRDS(file = "Files_for_code/Results/Simulations/res_simu_sigma_1.87.rds")
 
@@ -696,7 +701,7 @@ ggplot(res_temp %>% filter(!grepl("best", name))) + geom_point(aes(x = I, y = va
     scale_color_manual(values = col_temp)
 ```
 
-@fig-six presents the percentages of cases where the best treatment at 6 days (A) and 12 days (B) has been correctly identified for the "50% Y", "50% Z" and "50% Y / 50% Z" scenarios. The x-axis presents the number of trials and the y-axis the percentage of cases where the treatment identification is correct. In general, the best treatment is better identified when the number of trials increases. With the "50% Y / 50% Z" scenario, the best treatment at 6 days is well identified in 69% of cases with 20 trials and in 85% of cases with 80 trials. For each number of trials, the percentage of correctly identification is higher for the "50% Y / 50% Z" scenario than for the other two, and the scenario "50% Y" generally gives better results than the scenario "50% Z", except at 6 days with 20 trials. For example, at 12 days after treatment and with 40 trials, the percentage of correct identification is 5% higher with scenario "50% Y - 50% Z" than with scenario "50% Y" (78 vs 73), and 4% higher with the scenario "50% Y" than with scenario "50% Z" (73 vs 69). These results show the interest of combining prevalence and intensity data for assessing the efficacy of treatments and indentifying the best treatments.
+@fig-six presents the percentages of cases where the best treatment at 6 days (A) and 12 days (B) has been correctly identified for the "50% Y", "50% Z" and "50% Y / 50% Z" scenarios. The x-axis presents the number of trials and the y-axis the percentage of cases where the treatment identification is correct. In general, the best treatment is better identified when the number of trials increases. With the "50% Y / 50% Z" scenario, the best treatment at 6 days is well identified in 69% of cases with 20 trials and in 85% of cases with 80 trials. For each number of trials, the percentage of correctly identification is higher for the "50% Y / 50% Z" scenario than for the other two, and the scenario "50% Y" generally gives better results than the scenario "50% Z", except at 6 days with 20 trials. For example, at 12 days after treatment and with 40 trials, the percentage of correct identification is 5% higher with scenario "50% Y - 50% Z" than with scenario "50% Y" (78 vs 73), and 4% higher with the scenario "50% Y" than with scenario "50% Z" (73 vs 69). These results show the interest of combining prevalence and intensity data for assessing the efficacy of treatments and identifying the best treatments.
 
 
 ```{r figure6, cache = TRUE, out.width="100%", fig.height = 3, echo = FALSE}
@@ -775,7 +780,7 @@ tab7 %>%
 @fig-height (A.1, B.1 and C.1) shows the mean absolute error $E_{\gamma}$ (@eq-E_gamma) as a function of the number of trials for the four scenarios "100% Y", "100% Z", "100% Y / 100% Z" and "100% W". @fig-height (A.2, B.2 and C.2) shows the distributions of infested plants with 40 trials corresponding to the three values of $\alpha_0$ reported in Table 7.
 In case A (Table 7), the distribution of Z is such that Z is rarely close to 1 and often lower than 0.5 (@fig-height A.2). In case C, the distribution of Z is such that Z is often very close to 1 (100% of plants infested). Case B is intermediate. The accuracy of the estimated values of the model parameters $\gamma$ is better with scenario "100% Y" than with scenario "100% Z", for all number of trials. The advantage of "100% Y" is stronger in case of high pest prevalence (i.e., cases B and C) but very small in case of low pest prevalence (case A). For example, with 20 trials, the mean absolute error is 27% lower in the scenario "100% Y" than in "100% Z" for parameter set C (0.55 vs. 0.75), 10% lower for parameter set B (0.55 vs. 0.62), and not different for parameter set A (0.64). The "100% W" scenario leads to similar results as "100% Y", regardless of $\alpha_0$ and the number of trials. Results obtained with "100% Y / 100% Z" are generally similar to those obtained with "100% Y" and "100% W" but better than those obtained with the scenario "100% Z" in cases B and C. Here again, results show that 20 trials are not sufficient to obtain accurate parameter estimates.
 
-```{r figure8, cache = FALSE, out.width="100%", fig.height = 6, echo = FALSE}
+```{r figure8, cache = TRUE, out.width="100%", fig.height = 6, echo = FALSE}
 #| label: fig-height
 #| fig-cap: "Comparison of the '100% Y', '100% Z', '100% Y / 100% Z' and '100% W' scenarios according to the distribution of $Z$ and the number of trials, using the $E_{\\gamma}$ criterion (@eq-E_gamma). **A**, **B** and **C** correspond to different $Z$ distributions which are given by A.2, B.2 and C.2 (distribution for a number of trials equal to 40). A, B and C respectively correspond to $\\alpha_0 =$ -1, 1 and 2. The details of the simulation parameters are given in table 7. A1, B1 and C1 represent the absolute error $E_{\\gamma}$ averaged over the 974 simulated datasets as a function of the number of trials. Colors correspond to the different scenarios."
 
@@ -805,7 +810,7 @@ suppressWarnings(do.call("grid.arrange", c(list(legend), list(g1  + theme(legend
   
 In order to evaluate pest treatment efficacy, numerous trials are conducted to monitor pest prevalence and intensity. Quite often, only one type of data is available and, when both prevalence and intensity are available, they are usually analysed separately. In this paper, we proposed an alternative approach based on a hierarchical statistical model able to analyze intensity and prevalence data, simultaneously.
     
-We successfully applied the model to a real dataset including prevalence and incidence data collected to evaluate three pesticide treatments against aphids in sugar beets. The model was fitted to this datased using a Markov chain Monte Carlo algorithm, and convergence was quickly achieved after a few thoushands iterations. Results showed that the use of both prevalence and intensity data let to a substantial reduction of the uncertainty in the parameter estimates, compared to the use of a single type of data.
+We successfully applied the model to a real dataset including prevalence and incidence data collected to evaluate three pesticide treatments against aphids in sugar beets. The model was fitted to this datased using a Markov chain Monte Carlo algorithm, and convergence was quickly achieved after a few thousands iterations. Results showed that the use of both prevalence and intensity data led to a substantial reduction of the uncertainty in the parameter estimates, compared to the use of a single type of data.
    
 Results obtained from simulated data confirmed that, when pest prevalence and pest intensity are collected separately in different trials, the model parameters are more accurately estimated combining both prevalence and intensity trials than using one type of trials only. We also found that, when prevalence data are collected in all trials and intensity data are collected in a subset of trials, estimations and pest treatment ranking are more accurate using both types of data than using prevalence data only. Moreover, when only one type of observation can be collected in a pest survey or in an experimental trial, our analysis indicates that it is usually better to collect intensity data than prevalence data, especially in situations where all or most of the plants are expected to be infested. Finally, our simulations show that it is unlikely to obtain accurate results with fewer than 40 trials when assessing the efficacy of pest control treatments based on prevalence and intensity data.
   
