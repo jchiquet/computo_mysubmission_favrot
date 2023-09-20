@@ -321,16 +321,13 @@ The code used to perform the simulations is presented below.
 \
 
 ::: {.callout-note}
-The following code presents the inference for one seed. As the calculus
-time is growing fast with the number of trials and the number of sampled
-values, we set here the number of trials to 10 (I = 10) and the number
-of adaptations and iterations to 2000.
+The following code presents the inference for one seed. As the calculus time is growing fast with the number of trials and the number of sampled values, we set here the number of trials to 10 (I = 10) and the number of adaptations and iterations to 2000.
 
-Our simulations results are obtained by running this code for I = 10, 20,
-40, 80, for all seeds between 0 and 999, with a number of adaptations and
-iterations equal to 36000. We used the Migale server from INRAE to run
-these simulations.
+Our simulations results are obtained by running this code for I = 10, 20, 40, 80, for all seeds between 0 and 999, with a number of adaptations and iterations equal to 36000. We used the Migale server from INRAE to run these simulations.
+
+Scenarios "50% Y - 0% Z" and "0% Y - 50% Z" are obtained from scenarios "100% Y - 0% Z" and "0% Y - 100% Z", respectively. For example "50% Y - 0% Z" scenario with 40 trials corresponds to "100% Y - 0% Z" with 20 trials.
 :::
+
 
 
 

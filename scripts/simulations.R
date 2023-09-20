@@ -12,10 +12,6 @@ sig0 = 1.87;   chi = 0.27;   eta = 0.98
 ############################################################################
 
 # Building scenarios #######################################################
-# Scenarios "50% Y" and "50% Z" are obtained from scenarios "100% Y" and 
-# "100% Z", respectively. For example "50% Y" scenario with 40 trials 
-# corresponds to "100% Y" with 20 trials.
-
 seed = 1;   I = 10
 data = suppressMessages(simu_data(seed = seed, I = I))
 
