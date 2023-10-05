@@ -21,10 +21,9 @@ jobs:
       - name: Checking out repository for Github action
         uses: actions/checkout@v2
 
-      - name: Installing dependencies with Micromamba
-        uses: mamba-org/provision-with-micromamba@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          cache-env: true
+          cache-environment: true
 
       - name: Installing quarto
         uses: quarto-dev/quarto-actions/setup@v2
@@ -35,7 +34,6 @@ jobs:
         run: |
             quarto add --no-prompt computorg/computo-quarto-extension
       - name: Rendering with Quarto
-        shell: bash -l {0}
         run: |
             quarto render ${{ env.quarto_file }}.qmd
             mkdir _build
