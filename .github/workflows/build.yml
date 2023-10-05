@@ -33,6 +33,7 @@ jobs:
       - name: Install Computo extension for Quarto
         run: |
             quarto add --no-prompt computorg/computo-quarto-extension
+            
       - name: Rendering with Quarto
         run: |
             quarto render ${{ env.quarto_file }}.qmd
