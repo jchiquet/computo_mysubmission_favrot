@@ -1,52 +1,42 @@
 name: build
-on:
-  schedule:
-    - cron: '0 0 * * 0' 
-  push:
-    branches:
-      - master
-      - main
-permissions:
-  contents: write
 
-env: # Change this if needed
-  quarto_file: Article
-  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+on:
+  workflow_dispatch:
+  push:
+    branches: main
 
 jobs:
-  computorticle:
+  build-deploy:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
-      - name: Checking out repository for Github action
+      - name: Check out repository
         uses: actions/checkout@v2
 
-      - uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-file: environment.yml
-          cache-environment: true
-
-      - name: Installing quarto
+      - name: Set up quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           tinytex: true
+          version: pre-release
 
       - name: Install Computo extension for Quarto
         run: |
             quarto add --no-prompt computorg/computo-quarto-extension
-            
-      - name: Rendering with Quarto
-        run: |
-            quarto render ${{ env.quarto_file }}.qmd
-            mkdir _build
-            mv ${{ env.quarto_file }}.html _build/index.html
-            mv -vf ${{ env.quarto_file }}_files figures ${{ env.quarto_file }}.pdf _build/
-            cp environment.yml _build/
-            touch _build/.nojekyll
-        shell: micromamba-shell {0}
-      - name: Deploying article on github pages
-        uses: JamesIves/github-pages-deploy-action@v4
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
         with:
-          BRANCH: gh-pages
-          FOLDER: _build
-          CLEAN: true
+          r-version: '4.3.1'
+
+      - name: Install R Dependencies with renv
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 1
+
+      - name: Render and Publish
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
