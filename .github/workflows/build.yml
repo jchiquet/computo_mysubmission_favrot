@@ -14,6 +14,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      - name: Install JAGS
+        run: sudo apt install -y jags
+
       - name: Set up quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
