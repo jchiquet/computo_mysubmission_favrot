@@ -44,8 +44,6 @@ published: false
 format:
   computo-html: default
   computo-pdf: default
-header-includes:
-  - \usepackage{lineno}
 ---
 
 
